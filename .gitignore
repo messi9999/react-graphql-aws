@@ -42,3 +42,9 @@ amplifytools.xcconfig
 .secret-*
 **.sample
 #amplify-do-not-edit-end
+
+
+/main.py
+/run.sh
+/.env
+/.gitignore
