@@ -1,237 +1,185 @@
 
-import React, { useState, useRef, useEffect } from "react";
+import "./Header.css";
+import React, { useCallback, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+
 import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../actions/auth";
+import { CLEAR_MESSAGE } from "../actions/types";
+import { ReactComponent as LogoIcon } from "../img/icon.svg";
+import { ReactComponent as UserAvatar } from "../img/user.svg";
+import { ReactComponent as MenuIcon } from "../img/menu-svgrepo-com.svg";
+import { ReactComponent as HomeIcon } from "../img/home.svg";
+import UserinfoModal from "./UserinfoModal";
+import { Dropdown } from "react-bootstrap";
 
-import Form from "react-validation/build/form";
-import Input from "react-validation/build/input";
-import CheckButton from "react-validation/build/button";
-import { isEmail } from "validator";
-
-import { register } from "../actions/auth";
-
-import "bootstrap/dist/css/bootstrap.min.css";
-import { useNavigate } from "react-router-dom";
-
-import { ReactComponent as BugleIcaon } from "../img/icon_logo.svg";
-
-const required = (value) => {
-  if (!value) {
-    return (
-      <div className="alert alert-danger" role="alert">
-        This field is required!
-      </div>
-    );
-  }
-};
-
-const validEmail = (value) => {
-  if (!isEmail(value)) {
-    return (
-      <div className="alert alert-danger" role="alert">
-        This is not a valid email.
-      </div>
-    );
-  }
-};
-
-const vusername = (value) => {
-  if (value.length < 3 || value.length > 20) {
-    return (
-      <div className="alert alert-danger" role="alert">
-        The username must be between 3 and 20 characters.
-      </div>
-    );
-  }
-};
-
-const vpassword = (value) => {
-  if (value.length < 6 || value.length > 40) {
-    return (
-      <div className="alert alert-danger" role="alert">
-        The password must be between 6 and 40 characters.
-      </div>
-    );
-  }
-};
-
-const Register = () => {
-  const form = useRef();
-  const checkBtn = useRef();
-
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [successful, setSuccessful] = useState(false);
-  const [confirmpassword, setConfirmpassword] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-
-  const roles = ["user"];
-
-  const { message } = useSelector((state) => state.message);
-
+export default function Header() {
+  const navigate = useNavigate();
+  const { user: currentUser } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
 
-  const navigate = useNavigate();
-
-  const onChangeUsername = (e) => {
-    const username = e.target.value;
-    setUsername(username);
-  };
-
-  const onChangeEmail = (e) => {
-    const email = e.target.value;
-    setEmail(email);
-  };
-
-  const onChangePassword = (e) => {
-    const password = e.target.value;
-    setPassword(password);
-  };
-
-  const onChangeConPassword = (e) => {
-    e.preventDefault();
-    setConfirmpassword(e.target.value);
-  };
+  let location = useLocation();
 
   useEffect(() => {
-    if (password !== confirmpassword) {
-      setPasswordError("Passwords do not match");
-    } else {
-      // Password and confirm password match, do something
-      setPasswordError("");
+    if (["/login", "/register"].includes(location.pathname)) {
+      dispatch(CLEAR_MESSAGE()); // clear message when changing location
     }
-  }, [password, confirmpassword]);
+  }, [dispatch, location]);
 
-  const handleRegister = (e) => {
-    e.preventDefault();
+  const logOut = useCallback(() => {
+    dispatch(logout());
+  }, [dispatch]);
 
-    setSuccessful(false);
+  const [isOpen, setIsOpen] = React.useState(false);
 
-    form.current.validateAll();
-    if (passwordError) {
-      alert("Please confirm your password");
-    } else if (checkBtn.current.context._errors.length === 0) {
-      dispatch(register(username, email, password, roles))
-        .then(() => {
-          setSuccessful(true);
-        })
-        .catch(() => {
-          setSuccessful(false);
-        });
-    }
+  const openModal = () => {
+    setIsOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsOpen(false);
   };
 
   return (
-    <div className="col-md-12">
-      <div className="card card-container text-white rounded-4">
-        <label className="fs-3 fw-bolder text-center mb-2">
-          Welcome to the Bugle AI Club!
-        </label>
-        <label className="fs-5 fw-semibold text-center mb-3">
-          Thanks for joining us, please finish your account setup below
-        </label>
-        <div className="profile-img-card">
-          <BugleIcaon />
+    <div className="main-header row pt-1 p-0 m-0">
+      <div className="col-8 p-0 d-flex justify-content-start align-items-center">
+        <a href="/">
+          <HomeIcon className="header-homeicon" />
+        </a>
+        <div id="main-vector-img">
+          <LogoIcon />
         </div>
-
-        <Form onSubmit={handleRegister} ref={form}>
-          {!successful && (
-            <div>
-              <div className="form-group mb-3">
-                <label htmlFor="username">Create a Username</label>
-                <Input
-                  type="text"
-                  className="form-control"
-                  name="username"
-                  value={username}
-                  onChange={onChangeUsername}
-                  validations={[required, vusername]}
-                />
-              </div>
-
-              <div className="form-group mb-3">
-                <label htmlFor="email">Confirm your Email</label>
-                <Input
-                  type="email"
-                  className="form-control"
-                  name="email"
-                  value={email}
-                  onChange={onChangeEmail}
-                  validations={[required, validEmail]}
-                />
-              </div>
-
-              <div className="form-group mb-3">
-                <label htmlFor="password">Create a Password</label>
-                <Input
-                  type="password"
-                  className="form-control"
-                  name="password"
-                  value={password}
-                  onChange={onChangePassword}
-                  validations={[required, vpassword]}
-                />
-              </div>
-
-              <div className="form-group mb-3">
-                <label htmlFor="confirmpassword">Confirm Password</label>
-                <Input
-                  type="password"
-                  className="form-control"
-                  name="confirmpassword"
-                  value={confirmpassword}
-                  onChange={onChangeConPassword}
-                />
-                <div className="text-center w-100 p-2">
-                  {passwordError && (
-                    <span className="text-center bg-danger bg-opacity-50 mt-5 w-100 p-2">
-                      {passwordError}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="form-group mt-3">
-                <button className="btn btn-primary btn-block float-end">
-                  Sign Up
-                </button>
-                <button
-                  className="btn btn-sm btn-white border-0 text-decoration-underline mt-4 text-white"
-                  onClick={() => {
-                    navigate("/login");
-                  }}
-                >
-                  Already have an account? Login here
-                </button>
-              </div>
-            </div>
+        <label className="main-site-text text-white mt-0 ms-3">BUGLE AI</label>
+        <div className="ps-5 d-flex justify-content-start align-items-center">
+          <button
+            className="header-btn btn btn-default fs-6 text-white border-white rounded-5 me-5"
+            onClick={() => {
+              navigate("/demo");
+            }}
+          >
+            WATCH DEMO
+          </button>
+          {currentUser &&
+          (currentUser.subscriptionStatus === "active" ||
+            currentUser.subscriptionStatus === "trialing") ? (
+            <button
+              className="header-btn btn btn-md btn-success rounded-5"
+              style={{}}
+              onClick={() => {
+                navigate("/mainscreen");
+              }}
+            >
+              CREATE NEWSLETTER
+            </button>
+          ) : (
+            <button
+              className="header-btn btn btn-md btn-success rounded-5"
+              style={{}}
+              onClick={() => {
+                window.location.href = process.env.REACT_APP_PAYMENT_URL;
+              }}
+            >
+              START FREE TRIAL
+            </button>
           )}
-
-          {message && (
-            <div className="form-group">
-              <div
-                className={
-                  successful ? "alert alert-success" : "alert alert-danger"
-                }
-                role="alert"
-              >
-                {message}
-              </div>
-              <button
-                className="btn btn-sm btn-white bg-black text-white border-0 text-decoration-underline mt-4"
-                onClick={navigate("/login")}
-              >
-                Signin now
-              </button>
-            </div>
-          )}
-          <CheckButton style={{ display: "none" }} ref={checkBtn} />
-        </Form>
+        </div>
       </div>
+
+      <div className="col-4 p-0 d-flex justify-content-end align-items-center">
+        {currentUser ? (
+          <button
+            id="btn-contact"
+            className="header-btn btn btn-md btn-default text-white border-white rounded-5 me-5"
+            onClick={() => {
+              logOut();
+              navigate("/");
+            }}
+          >
+            Logout
+          </button>
+        ) : (
+          <button
+            id="btn-contact"
+            className="header-btn btn btn-md btn-default text-white border-white rounded-5 me-5"
+            onClick={() => {
+              navigate("/login");
+            }}
+          >
+            Login
+          </button>
+        )}
+        <button
+          id="btn-contact"
+          className="header-btn btn btn-md btn-default text-white border-white rounded-5 me-5"
+          onClick={() => {
+            navigate("/contactus");
+          }}
+        >
+          Contact Us
+        </button>
+        {currentUser ? (
+          <div className="d-flex flex-row justify-content-center align-items-center">
+            <div className="text-white me-2">{currentUser.username}</div>
+
+            <div>
+              <Dropdown className="d-inline mx-2">
+                <Dropdown.Toggle id="header-avatar-user">
+                  <div>
+                    <UserAvatar
+                      style={{
+                        width: "20px",
+                        height: "20px"
+                      }}
+                    />
+                  </div>
+                </Dropdown.Toggle>
+
+                <Dropdown.Menu className="bg-black">
+                  <div>
+                    <Dropdown.Item href="/profile" style={{ color: "white" }}>
+                      User Info
+                    </Dropdown.Item>
+                    {currentUser.roles[0] === "ROLE_ADMIN" && (
+                      <Dropdown.Item href="/admin" style={{ color: "white" }}>
+                        Admin
+                      </Dropdown.Item>
+                    )}
+                    <Dropdown.Item onClick={logOut} style={{ color: "white" }}>
+                      Logout
+                    </Dropdown.Item>
+                  </div>
+                </Dropdown.Menu>
+              </Dropdown>
+            </div>
+
+            <div>
+              <div id="header-avatar-drop" onClick={openModal}>
+                <MenuIcon />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div id="header-avatar-user">
+              <UserAvatar
+                style={{
+                  width: "20px",
+                  height: "20px"
+                }}
+                onClick={() => {
+                  navigate("/login");
+                }}
+              />
+            </div>
+            <div id="header-avatar-drop" onClick={openModal}>
+              <MenuIcon />
+            </div>
+          </div>
+        )}
+      </div>
+      <UserinfoModal isOpen={isOpen} onClose={closeModal} />
     </div>
   );
-};
-
-export default Register;
+}
 
             
