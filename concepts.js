@@ -1,144 +1,172 @@
 
-import "./UserinfoModal.css";
 import React from "react";
-import { Modal } from "react-bootstrap";
-import { ReactComponent as LogoIcon } from "../img/icon.svg";
-import { ReactComponent as UserAvatar } from "../img/user.svg";
-import "bootstrap/dist/css/bootstrap.min.css";
-import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { logout } from "../actions/auth";
+import { useSelector } from "react-redux";
+import { Navigate } from "react-router-dom";
+import Header from "../components/Header";
+import { useState } from "react";
+import { Button, Form, Modal, Table } from "react-bootstrap";
+import axios from "axios";
+import { useEffect } from "react";
+import { ReactComponent as EditIcon } from "../img/edit-button-svgrepo-com.svg";
+import { ReactComponent as DeleteIcon } from "../img/icons8-delete.svg";
 
-export default function UserinfoModal({ isOpen, onClose }) {
-  const navigate = useNavigate();
-  const { user: currentUser } = useSelector((state) => state.auth);
-  const dispatch = useDispatch();
-  const logOut = () => {
-    dispatch(logout());
+const BASE_URL = process.env.REACT_APP_BASEURL;
+
+export default function Adminboard() {
+  const [show, setShow] = useState(false);
+  const [userID, setUserID] = useState();
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [expireDate, setExpireDate] = useState();
+
+  const handleClose = () => setShow(false);
+
+  const [users, setUsers] = useState([]);
+
+  const handleEdit = (userId, userName, userEmail, userExpireDate) => {
+    // Logic to handle the edit action for the user with the specified ID
+    setUserID(userId);
+    setUsername(userName);
+    setEmail(userEmail);
+    setExpireDate(userExpireDate);
+
+    setShow(true);
+    console.log(`Editing user with ID: ${userID}`);
   };
-  if (!isOpen) return null;
-  return (
-    <div>
-      <Modal
-        className="modal-user-info"
-        show={isOpen}
-        onHide={onClose}
-        keyboard={false}
-        centered={true}
-        size="md"
-      >
-        <Modal.Header
-          className="bg-dark border-bottom-0"
-          closeButton
-          closeVariant="white"
-        >
-          <Modal.Title>
-            <div className="p-0 d-flex justify-content-start align-items-center">
-              <div>
-                <LogoIcon />
-              </div>
-              <label className="text-white mt-0 ms-3 fs-4">BUGLE AI</label>
-            </div>
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body
-          className="bg-dark text-white"
-          style={{ outline: "none !important" }}
-        >
-          <div>
-            {currentUser && (
-              <div>
-                <div className="fs-3 text-center mb-3 text-white">
-                  {currentUser.username}
-                </div>
-              </div>
-            )}
-            <div className="d-flex justify-content-center align-items-center">
-              <div
-                style={{
-                  width: "80px",
-                  height: "80px",
-                  borderRadius: "40px",
-                  backgroundColor: "#198754",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center"
-                }}
-              >
-                <a href="/profile">
-                  <div id="user-avata">
-                    <UserAvatar
-                      id="user-avata"
-                      style={{
-                        width: "40px",
-                        height: "40px"
-                      }}
-                    />
-                  </div>
-                </a>
-              </div>
-            </div>
-            <div className="d-flex flex-column justify-content-center align-items-center">
-              <button
-                className="mt-4 btn btn-default fs-6 text-white border-white rounded-5 w-50"
-                onClick={() => {
-                  navigate("/demo");
-                }}
-              >
-                WATCH DEMO
-              </button>
-              <button
-                className="mt-4 btn btn-default fs-6 text-white border-white rounded-5 w-50"
-                onClick={() => {
-                  navigate("/contactus");
-                }}
-              >
-                Contact Us
-              </button>
-            </div>
-          </div>
-          {currentUser &&
-          (currentUser.subscriptionStatus === "active" ||
-            currentUser.subscriptionStatus === "trialing") ? (
-            <div className="d-flex flex-column justify-content-center align-items-center">
-              <button
-                className="btn btn-md btn-success rounded-5"
-                style={{ marginTop: "5vh", marginBottom: "5vh" }}
-                onClick={() => {
-                  navigate("/mainscreen");
-                }}
-              >
-                CREATE NEWSLETTER
-              </button>
-            </div>
-          ) : (
-            <div className="d-flex flex-column justify-content-center align-items-center">
-              <button
-                className="btn btn-md btn-success rounded-5"
-                style={{ marginTop: "5vh", marginBottom: "5vh" }}
-                onClick={() => {
-                  navigate(`${process.env.REACT_APP_PAYMENT_URL}`);
-                }}
-              >
-                START FREE TRIAL
-              </button>
-            </div>
-          )}
 
-          {currentUser && (
-            <div>
-              <div className="fs-5 text-center mb-3 text-white">
-                <a href="/profile">User Info</a>
-                <div>
-                  <a href="/admin">Admin</a>
-                </div>
-                <div className="mt-3" onClick={logOut}>
-                  LogOut
-                </div>
-              </div>
-            </div>
-          )}
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(BASE_URL + "/all"); // Replace '/api/users' with your API endpoint
+        setUsers(response.data); // Assuming the response contains an array of users
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleDelete = async (userId) => {
+    // Logic to handle the delete action for the user with the specified ID
+    const res = await axios.delete(BASE_URL + `/delete/${userId}`);
+    console.log(res);
+    window.location.reload();
+  };
+
+  const handleSaveChanges = async () => {
+    const body = {
+      username: username,
+      email: email,
+      expireDate: expireDate
+    };
+    const res1 = await axios.put(BASE_URL + `/update/${userID}`, body);
+    console.log(res1);
+    setShow(false);
+    window.location.reload();
+  };
+
+  const { user: currentUser } = useSelector((state) => state.auth);
+  if (!currentUser) {
+    return <Navigate to="/login" />;
+  }
+  if (!currentUser.roles[0]) {
+    return <Navigate to="/login" />;
+  }
+  return (
+    <div className="home-main bg-black mb-0 bg-gradient py-3">
+      <div style={{ height: "18vh" }}>
+        <Header />
+        <div style={{ marginTop: "20vh" }}>
+          <div>
+            <h2 className="d-flex justify-content-start align-content-center">
+              Admin
+            </h2>
+          </div>
+          <div>
+            <Table responsive="sm">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>ExpireDate</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((user) => (
+                  <tr key={user.id}>
+                    <td>{user.id}</td>
+                    <td>{user.username}</td>
+                    <td>{user.email}</td>
+                    <td>{user.expireDate}</td>
+                    <td className="d-flex justify-content-start align-content-center">
+                      <div
+                        onClick={() =>
+                          handleEdit(
+                            user.id,
+                            user.username,
+                            user.email,
+                            user.expireDate
+                          )
+                        }
+                      >
+                        <EditIcon style={{ width: "25px", height: "auto" }} />
+                      </div>
+                      <div onClick={() => handleDelete(user.id)}>
+                        <DeleteIcon style={{ width: "25px", height: "auto" }} />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+        </div>
+      </div>
+      <Modal show={show} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Modal heading</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group>
+              <Form.Label>{userID}</Form.Label>
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>Username</Form.Label>
+              <Form.Control
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>Email</Form.Label>
+              <Form.Control
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>ExpireDate</Form.Label>
+              <Form.Control
+                type="date"
+                value={expireDate}
+                onChange={(e) => setExpireDate(e.target.value)}
+              />
+            </Form.Group>
+          </Form>
         </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={handleSaveChanges}>
+            Save Changes
+          </Button>
+        </Modal.Footer>
       </Modal>
     </div>
   );
