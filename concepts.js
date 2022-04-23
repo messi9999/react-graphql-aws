@@ -1,173 +1,183 @@
 
-import React from "react";
-import { useSelector } from "react-redux";
-import { Navigate } from "react-router-dom";
-import Header from "../components/Header";
-import { useState } from "react";
-import { Button, Form, Modal, Table } from "react-bootstrap";
-import axios from "axios";
-import { useEffect } from "react";
-import { ReactComponent as EditIcon } from "../img/edit-button-svgrepo-com.svg";
-import { ReactComponent as DeleteIcon } from "../img/icons8-delete.svg";
+import "./Header.css";
+import React, { useCallback, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
-const BASE_URL = process.env.REACT_APP_BASEURL;
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../actions/auth";
+import { CLEAR_MESSAGE } from "../actions/types";
+import { ReactComponent as LogoIcon } from "../img/icon.svg";
+import { ReactComponent as UserAvatar } from "../img/user.svg";
+import { ReactComponent as MenuIcon } from "../img/menu-svgrepo-com.svg";
+import { ReactComponent as HomeIcon } from "../img/home.svg";
+import UserinfoModal from "./UserinfoModal";
+import { Dropdown } from "react-bootstrap";
 
-export default function Adminboard() {
-  const [show, setShow] = useState(false);
-  const [userID, setUserID] = useState();
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [expireDate, setExpireDate] = useState();
+export default function Header() {
+  const navigate = useNavigate();
+  const { user: currentUser } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
 
-  const handleClose = () => setShow(false);
-
-  const [users, setUsers] = useState([]);
-
-  const handleEdit = (userId, userName, userEmail, userExpireDate) => {
-    // Logic to handle the edit action for the user with the specified ID
-    setUserID(userId);
-    setUsername(userName);
-    setEmail(userEmail);
-    setExpireDate(userExpireDate);
-
-    setShow(true);
-    console.log(`Editing user with ID: ${userID}`);
-  };
+  let location = useLocation();
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get(BASE_URL + "/all"); // Replace '/api/users' with your API endpoint
-        setUsers(response.data); // Assuming the response contains an array of users
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
+    if (["/login", "/register"].includes(location.pathname)) {
+      dispatch(CLEAR_MESSAGE()); // clear message when changing location
+    }
+  }, [dispatch, location]);
 
-    fetchData();
-  }, []);
+  const logOut = useCallback(() => {
+    dispatch(logout());
+  }, [dispatch]);
 
-  const handleDelete = async (userId) => {
-    // Logic to handle the delete action for the user with the specified ID
-    const res = await axios.delete(BASE_URL + `/delete/${userId}`);
-    console.log(res);
-    window.location.reload();
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  const openModal = () => {
+    setIsOpen(true);
   };
 
-  const handleSaveChanges = async () => {
-    const body = {
-      username: username,
-      email: email,
-      expireDate: expireDate
-    };
-    const res1 = await axios.put(BASE_URL + `/update/${userID}`, body);
-    console.log(res1);
-    setShow(false);
-    window.location.reload();
+  const closeModal = () => {
+    setIsOpen(false);
   };
 
-  const { user: currentUser } = useSelector((state) => state.auth);
-  if (!currentUser) {
-    return <Navigate to="/login" />;
-  }
-  if (!currentUser.roles[0]) {
-    return <Navigate to="/login" />;
-  }
   return (
-    <div className="home-main bg-black mb-0 bg-gradient py-3">
-      <div style={{ height: "18vh" }}>
-        <Header />
-        <div style={{ marginTop: "20vh" }}>
-          <div>
-            <h2 className="d-flex justify-content-start align-content-center">
-              Admin
-            </h2>
-          </div>
-          <div>
-            <Table responsive="sm">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Username</th>
-                  <th>Email</th>
-                  <th>ExpireDate</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => (
-                  <tr key={user.id}>
-                    <td>{user.id}</td>
-                    <td>{user.username}</td>
-                    <td>{user.email}</td>
-                    <td>{user.expireDate}</td>
-                    <td className="d-flex justify-content-start align-content-center">
-                      <div
-                        onClick={() =>
-                          handleEdit(
-                            user.id,
-                            user.username,
-                            user.email,
-                            user.expireDate
-                          )
-                        }
-                      >
-                        <EditIcon style={{ width: "25px", height: "auto" }} />
-                      </div>
-                      <div onClick={() => handleDelete(user.id)}>
-                        <DeleteIcon style={{ width: "25px", height: "auto" }} />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </div>
+    <div className="main-header row pt-1 p-0 m-0">
+      <div className="col-8 p-0 d-flex justify-content-start align-items-center">
+        <a href="/">
+          <HomeIcon className="header-homeicon" />
+        </a>
+        <div id="main-vector-img">
+          <LogoIcon />
+        </div>
+        <label className="main-site-text text-white mt-0 ms-3">BUGLE AI</label>
+        <div className="ps-5 d-flex justify-content-start align-items-center">
+          <button
+            className="header-btn btn btn-default fs-6 text-white border-white rounded-5 me-5"
+            onClick={() => {
+              navigate("/demo");
+            }}
+          >
+            WATCH DEMO
+          </button>
+          {currentUser &&
+          (currentUser.subscriptionStatus === "active" ||
+            currentUser.subscriptionStatus === "trialing") ? (
+            <button
+              className="header-btn btn btn-md btn-success rounded-5"
+              style={{}}
+              onClick={() => {
+                navigate("/mainscreen");
+              }}
+            >
+              CREATE NEWSLETTER
+            </button>
+          ) : (
+            <button
+              className="header-btn btn btn-md btn-success rounded-5"
+              style={{}}
+              onClick={() => {
+                window.location.href = process.env.REACT_APP_PAYMENT_URL;
+              }}
+            >
+              START FREE TRIAL
+            </button>
+          )}
         </div>
       </div>
-      <Modal show={show} onHide={handleClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>Modal heading</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group>
-              <Form.Label>{userID}</Form.Label>
-            </Form.Group>
-            <Form.Group>
-              <Form.Label>Username</Form.Label>
-              <Form.Control
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+
+      <div className="col-4 p-0 d-flex justify-content-end align-items-center">
+        {currentUser ? (
+          <button
+            id="btn-contact"
+            className="header-btn btn btn-md btn-default text-white border-white rounded-5 me-5"
+            onClick={() => {
+              logOut();
+              navigate("/");
+            }}
+          >
+            Logout
+          </button>
+        ) : (
+          <button
+            id="btn-contact"
+            className="header-btn btn btn-md btn-default text-white border-white rounded-5 me-5"
+            onClick={() => {
+              navigate("/login");
+            }}
+          >
+            Login
+          </button>
+        )}
+        <button
+          id="btn-contact"
+          className="header-btn btn btn-md btn-default text-white border-white rounded-5 me-5"
+          onClick={() => {
+            navigate("/contactus");
+          }}
+        >
+          Contact Us
+        </button>
+        {currentUser ? (
+          <div className="d-flex flex-row justify-content-center align-items-center">
+            <div className="text-white me-2">{currentUser.username}</div>
+
+            <div>
+              <Dropdown className="d-inline mx-2">
+                <Dropdown.Toggle id="header-avatar-user">
+                  <div>
+                    <UserAvatar
+                      style={{
+                        width: "20px",
+                        height: "20px"
+                      }}
+                    />
+                  </div>
+                </Dropdown.Toggle>
+
+                <Dropdown.Menu className="bg-black">
+                  <div>
+                    <Dropdown.Item href="/profile" style={{ color: "white" }}>
+                      User Info
+                    </Dropdown.Item>
+                    {currentUser.roles[0] === "ROLE_ADMIN" && (
+                      <Dropdown.Item href="/admin" style={{ color: "white" }}>
+                        Admin
+                      </Dropdown.Item>
+                    )}
+                    <Dropdown.Item onClick={logOut} style={{ color: "white" }}>
+                      Logout
+                    </Dropdown.Item>
+                  </div>
+                </Dropdown.Menu>
+              </Dropdown>
+            </div>
+
+            <div>
+              <div id="header-avatar-drop" onClick={openModal}>
+                <MenuIcon />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div id="header-avatar-user">
+              <UserAvatar
+                style={{
+                  width: "20px",
+                  height: "20px"
+                }}
+                onClick={() => {
+                  navigate("/login");
+                }}
               />
-            </Form.Group>
-            <Form.Group>
-              <Form.Label>Email</Form.Label>
-              <Form.Control
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </Form.Group>
-            <Form.Group>
-              <Form.Label>ExpireDate</Form.Label>
-              <Form.Control
-                type="date"
-                value={expireDate}
-                onChange={(e) => setExpireDate(e.target.value)}
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>
-            Close
-          </Button>
-          <Button variant="primary" onClick={handleSaveChanges}>
-            Save Changes
-          </Button>
-        </Modal.Footer>
-      </Modal>
+            </div>
+            <div id="header-avatar-drop" onClick={openModal}>
+              <MenuIcon />
+            </div>
+          </div>
+        )}
+      </div>
+      <UserinfoModal isOpen={isOpen} onClose={closeModal} />
     </div>
   );
 }
