@@ -1,183 +1,145 @@
 
-import "./Header.css";
-import React, { useCallback, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-
-import { useDispatch, useSelector } from "react-redux";
-import { logout } from "../actions/auth";
-import { CLEAR_MESSAGE } from "../actions/types";
+import "./UserinfoModal.css";
+import React from "react";
+import { Modal } from "react-bootstrap";
 import { ReactComponent as LogoIcon } from "../img/icon.svg";
 import { ReactComponent as UserAvatar } from "../img/user.svg";
-import { ReactComponent as MenuIcon } from "../img/menu-svgrepo-com.svg";
-import { ReactComponent as HomeIcon } from "../img/home.svg";
-import UserinfoModal from "./UserinfoModal";
-import { Dropdown } from "react-bootstrap";
+import "bootstrap/dist/css/bootstrap.min.css";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../actions/auth";
 
-export default function Header() {
+export default function UserinfoModal({ isOpen, onClose }) {
   const navigate = useNavigate();
   const { user: currentUser } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
-
-  let location = useLocation();
-
-  useEffect(() => {
-    if (["/login", "/register"].includes(location.pathname)) {
-      dispatch(CLEAR_MESSAGE()); // clear message when changing location
-    }
-  }, [dispatch, location]);
-
-  const logOut = useCallback(() => {
+  const logOut = () => {
     dispatch(logout());
-  }, [dispatch]);
-
-  const [isOpen, setIsOpen] = React.useState(false);
-
-  const openModal = () => {
-    setIsOpen(true);
   };
-
-  const closeModal = () => {
-    setIsOpen(false);
-  };
-
+  if (!isOpen) return null;
   return (
-    <div className="main-header row pt-1 p-0 m-0">
-      <div className="col-8 p-0 d-flex justify-content-start align-items-center">
-        <a href="/">
-          <HomeIcon className="header-homeicon" />
-        </a>
-        <div id="main-vector-img">
-          <LogoIcon />
-        </div>
-        <label className="main-site-text text-white mt-0 ms-3">BUGLE AI</label>
-        <div className="ps-5 d-flex justify-content-start align-items-center">
-          <button
-            className="header-btn btn btn-default fs-6 text-white border-white rounded-5 me-5"
-            onClick={() => {
-              navigate("/demo");
-            }}
-          >
-            WATCH DEMO
-          </button>
-          {currentUser &&
-          (currentUser.subscriptionStatus === "active" ||
-            currentUser.subscriptionStatus === "trialing") ? (
-            <button
-              className="header-btn btn btn-md btn-success rounded-5"
-              style={{}}
-              onClick={() => {
-                navigate("/mainscreen");
-              }}
-            >
-              CREATE NEWSLETTER
-            </button>
-          ) : (
-            <button
-              className="header-btn btn btn-md btn-success rounded-5"
-              style={{}}
-              onClick={() => {
-                window.location.href = process.env.REACT_APP_PAYMENT_URL;
-              }}
-            >
-              START FREE TRIAL
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="col-4 p-0 d-flex justify-content-end align-items-center">
-        {currentUser ? (
-          <button
-            id="btn-contact"
-            className="header-btn btn btn-md btn-default text-white border-white rounded-5 me-5"
-            onClick={() => {
-              logOut();
-              navigate("/");
-            }}
-          >
-            Logout
-          </button>
-        ) : (
-          <button
-            id="btn-contact"
-            className="header-btn btn btn-md btn-default text-white border-white rounded-5 me-5"
-            onClick={() => {
-              navigate("/login");
-            }}
-          >
-            Login
-          </button>
-        )}
-        <button
-          id="btn-contact"
-          className="header-btn btn btn-md btn-default text-white border-white rounded-5 me-5"
-          onClick={() => {
-            navigate("/contactus");
-          }}
+    <div>
+      <Modal
+        className="modal-user-info"
+        show={isOpen}
+        onHide={onClose}
+        keyboard={false}
+        centered={true}
+        size="md"
+      >
+        <Modal.Header
+          className="bg-dark border-bottom-0"
+          closeButton
+          closeVariant="white"
         >
-          Contact Us
-        </button>
-        {currentUser ? (
-          <div className="d-flex flex-row justify-content-center align-items-center">
-            <div className="text-white me-2">{currentUser.username}</div>
-
-            <div>
-              <Dropdown className="d-inline mx-2">
-                <Dropdown.Toggle id="header-avatar-user">
-                  <div>
+          <Modal.Title>
+            <div className="p-0 d-flex justify-content-start align-items-center">
+              <div>
+                <LogoIcon />
+              </div>
+              <label className="text-white mt-0 ms-3 fs-4">BUGLE AI</label>
+            </div>
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body
+          className="bg-dark text-white"
+          style={{ outline: "none !important" }}
+        >
+          <div>
+            {currentUser && (
+              <div>
+                <div className="fs-3 text-center mb-3 text-white">
+                  {currentUser.username}
+                </div>
+              </div>
+            )}
+            <div className="d-flex justify-content-center align-items-center">
+              <div
+                style={{
+                  width: "80px",
+                  height: "80px",
+                  borderRadius: "40px",
+                  backgroundColor: "#198754",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center"
+                }}
+              >
+                <a href="/profile">
+                  <div id="user-avata">
                     <UserAvatar
+                      id="user-avata"
                       style={{
-                        width: "20px",
-                        height: "20px"
+                        width: "40px",
+                        height: "40px"
                       }}
                     />
                   </div>
-                </Dropdown.Toggle>
-
-                <Dropdown.Menu className="bg-black">
-                  <div>
-                    <Dropdown.Item href="/profile" style={{ color: "white" }}>
-                      User Info
-                    </Dropdown.Item>
-                    {currentUser.roles[0] === "ROLE_ADMIN" && (
-                      <Dropdown.Item href="/admin" style={{ color: "white" }}>
-                        Admin
-                      </Dropdown.Item>
-                    )}
-                    <Dropdown.Item onClick={logOut} style={{ color: "white" }}>
-                      Logout
-                    </Dropdown.Item>
-                  </div>
-                </Dropdown.Menu>
-              </Dropdown>
-            </div>
-
-            <div>
-              <div id="header-avatar-drop" onClick={openModal}>
-                <MenuIcon />
+                </a>
               </div>
             </div>
-          </div>
-        ) : (
-          <div>
-            <div id="header-avatar-user">
-              <UserAvatar
-                style={{
-                  width: "20px",
-                  height: "20px"
-                }}
+            <div className="d-flex flex-column justify-content-center align-items-center">
+              <button
+                className="mt-4 btn btn-default fs-6 text-white border-white rounded-5 w-50"
                 onClick={() => {
-                  navigate("/login");
+                  navigate("/demo");
                 }}
-              />
-            </div>
-            <div id="header-avatar-drop" onClick={openModal}>
-              <MenuIcon />
+              >
+                WATCH DEMO
+              </button>
+              <button
+                className="mt-4 btn btn-default fs-6 text-white border-white rounded-5 w-50"
+                onClick={() => {
+                  navigate("/contactus");
+                }}
+              >
+                Contact Us
+              </button>
             </div>
           </div>
-        )}
-      </div>
-      <UserinfoModal isOpen={isOpen} onClose={closeModal} />
+          {currentUser &&
+          (currentUser.subscriptionStatus === "active" ||
+            currentUser.subscriptionStatus === "trialing") ? (
+            <div className="d-flex flex-column justify-content-center align-items-center">
+              <button
+                className="btn btn-md btn-success rounded-5"
+                style={{ marginTop: "5vh", marginBottom: "5vh" }}
+                onClick={() => {
+                  navigate("/mainscreen");
+                }}
+              >
+                CREATE NEWSLETTER
+              </button>
+            </div>
+          ) : (
+            <div className="d-flex flex-column justify-content-center align-items-center">
+              <button
+                className="btn btn-md btn-success rounded-5"
+                style={{ marginTop: "5vh", marginBottom: "5vh" }}
+                onClick={() => {
+                  navigate(`${process.env.REACT_APP_PAYMENT_URL}`);
+                }}
+              >
+                START FREE TRIAL
+              </button>
+            </div>
+          )}
+
+          {currentUser && (
+            <div>
+              <div className="fs-5 text-center mb-3 text-white">
+                <a href="/profile">User Info</a>
+                <div>
+                  <a href="/admin">Admin</a>
+                </div>
+                <div className="mt-3" onClick={logOut}>
+                  LogOut
+                </div>
+              </div>
+            </div>
+          )}
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }
